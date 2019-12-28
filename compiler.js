@@ -32,6 +32,8 @@ const getFileName = (file) => path.basename(file);
 
 var G = {};
 var buildFirstTime = true;
+var sourceFileMD5 = { };
+var coreChange = false;
 
 var boardDirectory;
 
@@ -105,7 +107,7 @@ function compile(rawCode, boardName, config, cb) {
     inc_src = inc_src.concat(engine.util.walk(platformIncludeDir)
       .filter(file => path.extname(file) === ".cpp" || path.extname(file) === ".c" || path.extname(file) === ".S"));
 	
-	console.log(inc_src);
+	// console.log(inc_src);
 	
     let inc_switch = [];
     //--- step 1 load template and create full code ---//
@@ -238,11 +240,30 @@ const compileFiles = async function(sources, boardCppOptions, boardcflags, board
         });
       }
     };
+	
+	coreChange = false;
     
     // Compile File
     for (let file of sources) {
       let filename = getFileName(file);
       let fn_obj = `${G.app_dir}/${filename}.o`;
+	  
+	  // Check file before compile
+	  let md5 = await md5File(file); // get md5 form source file
+	  if (fs.existsSync(fn_obj)) { // if file .o have
+	    if (typeof sourceFileMD5[encodeURIComponent(file)] !== "undefined") {
+	      if (sourceFileMD5[encodeURIComponent(file)] === md5) { // if source file is old
+            continue; // Skip
+	      }
+		}
+	  }
+	  sourceFileMD5[encodeURIComponent(file)] = md5;
+	  
+	  if (!file.endsWith("user_app.cpp")) {
+        coreChange = true;
+	  }
+     
+	  // .o file is old or don't have than compile
       let cmd = "";
       if (file.endsWith(".c") || file.endsWith(".S")) { // .c & .S
         cmd = `"${G.COMPILER_GCC}" ${cflags} ${inc_switch} ${debug_opt} -c "${file}" -o "${fn_obj}"`;
@@ -259,6 +280,10 @@ const compileFiles = async function(sources, boardCppOptions, boardcflags, board
 //=====================================//
 const archiveFiles = async function(sources) {
   log('>>> Archiving built core ... <<<');
+  
+  if (!coreChange) {
+    return true;
+  }
 
   for (let file of sources) {
 	if (file.endsWith("user_app.cpp")) { // Skip main file
@@ -289,9 +314,12 @@ function linkObject(boardldflags, extarnal_libflags) {
   log(`>>> Linking... ${G.ELF_FILE}`);
   G.cb(`linking... ${G.ELF_FILE}`);
   
-  ldflags = `${G.ldflags.join(" ")} ${boardldflags.join(" ")} ${extarnal_libflags.join(" ")}`;
+  let ldflags = `${G.ldflags.join(" ")} ${boardldflags.join(" ")} ${extarnal_libflags.join(" ")}`;
+
+  let obj_files = fs.readdirSync(G.app_dir).filter(f => f.endsWith(".o"));
+  obj_files = obj_files.map(f => `"${G.app_dir}/${f}"`).join(" ");
   
-  cmd = `"${G.COMPILER_GCC}" ${ldflags} "${platformDir}/cores/kendryte-standalone-sdk/lds/kendryte.ld" ${G.app_dir}/user_app.cpp.o -o "${G.ELF_FILE}" -Wl,--start-group -lgcc -lm -lc -Wl,--end-group -Wl,--start-group "${G.ARCHIVE_FILE}" -lgcc -lm -lc -Wl,--end-group`;
+  cmd = `"${G.COMPILER_GCC}" ${ldflags} -T "${platformDir}/cores/kendryte-standalone-sdk/lds/kendryte.ld" ${G.app_dir}/user_app.cpp.o -o "${G.ELF_FILE}" -Wl,--start-group -lgcc -lm -lc -Wl,--end-group -Wl,--start-group "${G.ARCHIVE_FILE}" -lgcc -lm -lc -Wl,--end-group`;
   return execPromise(ospath(cmd), { cwd: G.process_dir });
 }
 

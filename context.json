@@ -65,7 +65,7 @@
 	"-Wno-error=unused-const-variable"
   ],
   "ldflags": [
-    "-mcmodel=medany -mabi=lp64f -march=rv64imafc -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fno-zero-initialized-in-bss -Os -ggdb -nostartfiles -static -Wl,--gc-sections -Wl,-static -Wl,--whole-archive -Wl,--no-whole-archive -Wl,-EL -Wl,--no-relax -T"
+    "-mcmodel=medany -mabi=lp64f -march=rv64imafc -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fno-zero-initialized-in-bss -Os -ggdb -nostartfiles -static -Wl,--gc-sections -Wl,-static -Wl,--whole-archive -Wl,--no-whole-archive -Wl,-EL -Wl,--no-relax"
   ],
   "Sflag": [
 	"-c {debugflags} {bothflags} {preprocflags}",

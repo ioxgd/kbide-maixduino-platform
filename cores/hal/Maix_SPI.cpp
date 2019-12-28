@@ -1,5 +1,7 @@
 
-#include "../../../libraries/SPI/src/SPI.h"
+// #include "../../../libraries/SPI/src/SPI.h"
+
+#include "SPI.h"
 
 #include "stdio.h"
 #include "utils.h"

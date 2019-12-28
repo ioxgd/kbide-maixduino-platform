@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 #include "platform.h"
-#include "spi.h"
+#include "./include/spi.h"
 #include "fpioa.h"
 #include "utils.h"
 #include "gpiohs.h"
