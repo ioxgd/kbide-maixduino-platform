@@ -1,5 +1,5 @@
 {
-  "gcc_dir": "./tools/riscv64-unknown-elf-gcc/bin",
+  "gcc_dir": "tools/riscv64-unknown-elf-gcc/bin",
   "preprocflags": [
 	"-I\"{platform}/cores\"",
     "-I\"{platform}/cores/avr\"",
@@ -65,9 +65,9 @@
 	"-Wno-error=unused-const-variable"
   ],
   "ldflags": [
-    "-mcmodel=medany -mabi=lp64f -march=rv64imafc -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fno-zero-initialized-in-bss -Os -ggdb -nostartfiles -static -Wl,--gc-sections -Wl,-static -Wl,--whole-archive -Wl,--no-whole-archive -Wl,-EL -Wl,--no-relax"
+    "-mcmodel=medany -mabi=lp64f -march=rv64imafc -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fno-zero-initialized-in-bss -Os -ggdb -nostartfiles -static -Wl,--gc-sections -Wl,-static -Wl,--whole-archive -Wl,--no-whole-archive -Wl,-EL -Wl,--no-relax -Wl,--start-group -lgcc -lm -lc -Wl,--end-group"
   ],
-  "Sflag": [
+  "Sflags": [
 	"-c {debugflags} {bothflags} {preprocflags}",
 	"-g -x assembler-with-cpp -D __riscv64"
   ]
