@@ -2,7 +2,7 @@ const util = require("util");
 const fs = require("fs");
 const path = require("path");
 const execPromise = util.promisify(require("child_process").exec);
-const exec = require("child_process").exec;
+const { exec, execFile } = require("child_process");
 const engine = Vue.prototype.$engine;
 const { default: PQueue } = engine.util.requireFunc("p-queue");
 const GB = Vue.prototype.$global;
@@ -62,10 +62,13 @@ const setConfig = (context) => {
   G.cflags = G.cflags.map(f => f.replace(/\{bothflags\}/g, G.bothflags));
   G.cflags = G.cflags.map(f => f.replace(/\{preprocflags\}/g, G.preprocflags));
   
-  
   G.cppflags = G.cppflags.map(f => f.replace(/\{debugflags\}/g, G.debugflags));
   G.cppflags = G.cppflags.map(f => f.replace(/\{bothflags\}/g, G.bothflags));
   G.cppflags = G.cppflags.map(f => f.replace(/\{preprocflags\}/g, G.preprocflags));
+  
+  G.Sflags = G.Sflags.map(f => f.replace(/\{debugflags\}/g, G.debugflags));
+  G.Sflags = G.Sflags.map(f => f.replace(/\{bothflags\}/g, G.bothflags));
+  G.Sflags = G.Sflags.map(f => f.replace(/\{preprocflags\}/g, G.preprocflags));
   
   G.ldflags = G.ldflags.map(f => f.replace(/\{platform\}/g, platformDir));
 
@@ -187,8 +190,10 @@ function compile(rawCode, boardName, config, cb) {
 
     inc_src.push(`${app_dir}/user_app.cpp`);
     setConfig(contextBoard);
+	
+	console.log(inc_src);
 
-    compileFiles(inc_src, [], cflags, [], inc_switch).then(() => {
+    compileFiles(inc_src, [], cflags, cflags, inc_switch).then(() => {
       // Archiving built core (caching)
       return archiveFiles(inc_src);
 	}).then(() => {
@@ -213,6 +218,7 @@ const compileFiles = async function(sources, boardCppOptions, boardcflags, board
   return new Promise(async (resolve, reject) => {
     let cflags = `${G.cflags.join(" ")} ${boardcflags.join(" ")}`;
 	let cppflags = `${G.cppflags.join(" ")} ${boardcppflags.join(" ")}`;
+	let Sflags = G.Sflags.join(" ");
     let inc_switch = plugins_includes_switch.map(obj => `-I"${obj}"`).join(" ");
     let debug_opt = "-DF_CPU=400000000L -DARDUINO=10810 -DK210 -DARCH=K210";
 
@@ -265,11 +271,13 @@ const compileFiles = async function(sources, boardCppOptions, boardcflags, board
      
 	  // .o file is old or don't have than compile
       let cmd = "";
-      if (file.endsWith(".c") || file.endsWith(".S")) { // .c & .S
-        cmd = `"${G.COMPILER_GCC}" ${cflags} ${inc_switch} ${debug_opt} -c "${file}" -o "${fn_obj}"`;
+      if (file.endsWith(".c")) { // .c
+        cmd = `"${G.COMPILER_GCC}" ${cflags} ${inc_switch} ${debug_opt} "${file}" -o "${fn_obj}"`;
       } else if (file.endsWith(".cpp")) { // .cpp
-        cmd = `"${G.COMPILER_CPP}" ${cppflags} ${inc_switch} ${debug_opt} -c "${file}" -o "${fn_obj}"`;
-      }
+        cmd = `"${G.COMPILER_CPP}" ${cppflags} ${inc_switch} ${debug_opt} "${file}" -o "${fn_obj}"`;
+      } else if (file.endsWith(".S")) {
+        cmd = `"${G.COMPILER_GCC}" ${Sflags} ${inc_switch} ${debug_opt} "${file}" -o "${fn_obj}"`;
+	  }
       queue.add(async () => { await exec(file, cmd); });
     }
     await queue.onIdle();
@@ -281,9 +289,9 @@ const compileFiles = async function(sources, boardCppOptions, boardcflags, board
 const archiveFiles = async function(sources) {
   log('>>> Archiving built core ... <<<');
   
-  if (!coreChange) {
+  // if (!coreChange) {
     return true;
-  }
+  // }
 
   for (let file of sources) {
 	if (file.endsWith("user_app.cpp")) { // Skip main file
@@ -317,10 +325,34 @@ function linkObject(boardldflags, extarnal_libflags) {
   let ldflags = `${G.ldflags.join(" ")} ${boardldflags.join(" ")} ${extarnal_libflags.join(" ")}`;
 
   let obj_files = fs.readdirSync(G.app_dir).filter(f => f.endsWith(".o"));
-  obj_files = obj_files.map(f => `"${G.app_dir}/${f}"`).join(" ");
+  // obj_files = obj_files.map(f => `"${G.app_dir}/${f}"`).join(" ");
+  obj_files = obj_files.map(f => `${G.app_dir}/${f}`)
   
-  cmd = `"${G.COMPILER_GCC}" ${ldflags} -T "${platformDir}/cores/kendryte-standalone-sdk/lds/kendryte.ld" ${G.app_dir}/user_app.cpp.o -o "${G.ELF_FILE}" -Wl,--start-group -lgcc -lm -lc -Wl,--end-group -Wl,--start-group "${G.ARCHIVE_FILE}" -lgcc -lm -lc -Wl,--end-group`;
-  return execPromise(ospath(cmd), { cwd: G.process_dir });
+  // cmd = `"${G.COMPILER_GCC}" ${ldflags} -T "${platformDir}/cores/kendryte-standalone-sdk/lds/kendryte.ld" ${G.app_dir}/user_app.cpp.o -o "${G.ELF_FILE}" -Wl,--start-group -lgcc -lm -lc -Wl,--end-group -Wl,--start-group "${G.ARCHIVE_FILE}" -lgcc -lm -lc -Wl,--end-group`;
+  cmd = `"${G.COMPILER_GCC}" ${ldflags} -T "${platformDir}/cores/kendryte-standalone-sdk/lds/kendryte.ld" ${obj_files} -o "${G.ELF_FILE}" -Wl,--start-group -lgcc -lm -lc -Wl,--end-group -Wl,--start-group "${G.ARCHIVE_FILE}" -lgcc -lm -lc -Wl,--end-group`;
+  // return execPromise(ospath(cmd), { cwd: G.process_dir });
+  
+  let arg = [];
+  arg = arg.concat(ldflags.split(' '));
+  arg.push("-T");
+  arg.push(`${platformDir}/cores/kendryte-standalone-sdk/lds/kendryte.ld`);
+  arg = arg.concat(obj_files);
+  arg.push('-o');
+  arg.push(G.ELF_FILE);
+  
+  arg = arg.map(p => ospath(p));
+  arg = arg.filter(x => x.length > 0)
+  
+  return new Promise((resolve, reject) => {
+    execFile(ospath(G.COMPILER_CPP + ".exe"), arg, {cwd: G.process_dir }, (error, stdout, stderr) => {
+      if (error) {
+        console.warn(error);
+		reject(error);
+		return;
+      }
+      resolve(stdout ? stdout : stderr);
+    });
+  });
 }
 
 function archiveProgram(plugins_sources) {
