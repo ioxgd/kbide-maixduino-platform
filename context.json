@@ -1,0 +1,74 @@
+{
+  "gcc_dir": "./tools/riscv64-unknown-elf-gcc/bin",
+  "preprocflags": [
+	"-I\"{platform}/cores\"",
+    "-I\"{platform}/cores/avr\"",
+    "-I\"{platform}/cores/hal/include\"",
+	"-I\"{platform}/cores/kendryte-standalone-sdk/lib/bsp/include\"",
+    "-I\"{platform}/cores/kendryte-standalone-sdk/lib/drivers/include\"",
+    "-I\"{platform}/cores/kendryte-standalone-sdk/lib/utils/include\"",
+    "-I\"{platform}/cores/kendryte-standalone-sdk/lib/freertos/conf\"",
+    "-I\"{platform}/cores/kendryte-standalone-sdk/lib/freertos/include\"",
+    "-I\"{platform}/cores/kendryte-standalone-sdk/lib/freertos/portable\"",
+	"-I\"{platform}/libraries/SPI/src\"",
+	"-I\"{board}/include\""
+  ],
+  "bothflags": [
+	"-mcmodel=medany -mabi=lp64f -march=rv64imafc -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fno-zero-initialized-in-bss -Os -ggdb",
+	"-Wall",
+	"-Werror=all",
+	"-Wno-error=unused-function",
+	"-Wno-error=unused-but-set-variable",
+	"-Wno-error=unused-variable",
+	"-Wno-error=deprecated-declarations",
+	"-Wextra",
+	"-Werror=frame-larger-than=65536",
+	"-Wno-unused-parameter",
+	"-Wno-sign-compare",
+	"-Wno-error=missing-braces",
+	"-Wno-error=return-type",
+	"-Wno-error=pointer-sign",
+	"-Wno-missing-braces",
+	"-Wno-strict-aliasing",
+	"-Wno-implicit-fallthrough",
+	"-Wno-missing-field-initializers",
+	"-Wno-int-to-pointer-cast",
+	"-Wno-error=comment",
+	"-Wno-error=logical-not-parentheses",
+	"-Wno-error=duplicate-decl-specifier",
+	"-Wno-error=parentheses",
+	"-Wno-error=narrowing",
+	"-Wno-error=unused-value"
+  ],
+  "debugflags": [
+	"-DCONFIG_LOG_ENABLE",
+	"-DCONFIG_LOG_LEVEL=LOG_INFO",
+	"-DDEBUG=1",
+	"-D__riscv64"
+  ],
+  "cflags": [
+	"-c {debugflags} {bothflags} {preprocflags}",
+	"-std=gnu11",
+	"-Wno-pointer-to-int-cast",
+	"-Wno-old-style-declaration",
+	"-g",
+	"-Wno-error=unused-variable",
+	"-Wno-error=unused-function",
+	"-Wno-error=unused-const-variable"
+  ],
+  "cppflags" : [
+	"-c {debugflags} {bothflags} {preprocflags}",
+	"-std=gnu++17",
+	"-g",
+	"-Wno-error=unused-variable",
+	"-Wno-error=unused-function",
+	"-Wno-error=unused-const-variable"
+  ],
+  "ldflags": [
+    "-mcmodel=medany -mabi=lp64f -march=rv64imafc -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fno-zero-initialized-in-bss -Os -ggdb -nostartfiles -static -Wl,--gc-sections -Wl,-static -Wl,--whole-archive -Wl,--no-whole-archive -Wl,-EL -Wl,--no-relax -T"
+  ],
+  "Sflag": [
+	"-c {debugflags} {bothflags} {preprocflags}",
+	"-g -x assembler-with-cpp -D __riscv64"
+  ]
+}
