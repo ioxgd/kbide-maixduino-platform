@@ -16,7 +16,7 @@ module.exports = {
                     `<block type="io_setpin">
                         <value name="pin">
                             <shadow type="math_number">
-                                <field name="NUM">13</field>
+                                <field name="NUM">8</field>
                             </shadow>
                         </value>
                     </block>`
@@ -26,7 +26,7 @@ module.exports = {
                     `<block type="io_digital_read">
                         <value name="pin">
                             <shadow type="math_number">
-                                <field name="NUM">2</field>
+                                <field name="NUM">8</field>
                             </shadow>
                         </value>
                     </block>`
@@ -36,7 +36,7 @@ module.exports = {
                     `<block type="io_digital_write">
                         <value name="pin">
                             <shadow type="math_number">
-                                <field name="NUM">2</field>
+                                <field name="NUM">8</field>
                             </shadow>
                         </value>
                         <value name="value">
@@ -48,20 +48,10 @@ module.exports = {
                 },
                 {
                     xml : 
-                    `<block type="io_analog_read">
-                        <value name="pin">
-                            <shadow type="math_number">
-                                <field name="NUM">36</field>
-                            </shadow>
-                        </value>
-                    </block>`
-                },
-                {
-                    xml : 
                     `<block type="io_pwm_write">
                         <value name="pin">
                             <shadow type="math_number">
-                                <field name="NUM">36</field>
+                                <field name="NUM">8</field>
                             </shadow>
                         </value>
                         <value name="value">
@@ -76,7 +66,7 @@ module.exports = {
                     `<block type="io_pulse_in">
                         <value name="pin">
                             <shadow type="math_number">
-                                <field name="NUM">36</field>
+                                <field name="NUM">8</field>
                             </shadow>
                         </value>
                     </block>`

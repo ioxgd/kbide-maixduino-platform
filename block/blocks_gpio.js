@@ -48,20 +48,6 @@ Blockly.Blocks['io_digital_write'] = {
   }
 };
 
-Blockly.Blocks['io_analog_read'] = {
-  init: function() {
-    this.appendValueInput("pin")
-        .setCheck("Number")
-        .appendField("read analog input pin ");
-    this.setInputsInline(true);
-    this.setOutput(true, "Number");
-    this.setColour(45);
- this.setTooltip("read analog value from pin");
- this.setHelpUrl("");
-  }
-};
-
-
 Blockly.Blocks['io_pwm_write'] = {
   init: function() {
     this.appendValueInput("pin")

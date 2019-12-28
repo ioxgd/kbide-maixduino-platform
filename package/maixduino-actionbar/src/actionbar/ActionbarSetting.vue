@@ -53,9 +53,9 @@
       return {
         comports: [],
         isFirstLoad: true,
-        currentPort: this.$global.board.package["arduino-avr-actionbar"].comport,
-        baudrates: [57600, 115200, 256000, 230400, 512000, 921600],
-        baudrate: this.$global.board.package["arduino-avr-actionbar"].baudrate,
+        currentPort: this.$global.board.package["maixduino-actionbar"].comport,
+        baudrates: [ 2000000, 1500000, 1000000 ],
+        baudrate: this.$global.board.package["maixduino-actionbar"].baudrate,
         showPassword: false,
         settingDialog: false,
       };
@@ -99,11 +99,11 @@
       currentPort: function(port) {
         console.log(`current Port changed. to ${port}`);
         //this.$global.board.package["arduino-esp32-actionbar"].comport = this.comports[0];
-        this.$global.board.package["arduino-avr-actionbar"].comport = port;
+        this.$global.board.package["maixduino-actionbar"].comport = port;
       },
       baudrate: function(rate) {
         console.log(`current rate changed. to ${rate}`);
-        this.$global.board.package["arduino-avr-actionbar"].baudrate = rate;
+        this.$global.board.package["maixduino-actionbar"].baudrate = rate;
       },
     },
   };

@@ -1,9 +1,9 @@
 module.exports = {
-  name: "arduino-avr-actionbar",
-  title: "Arduino-avr actionbar",
-  description: "Actionbar setting menu for arduino-avr",
-  auther: "Comdet Pheaudphut",
-  website: "?",
+  name: "maixduino-actionbar",
+  title: "Maixduino actionbar",
+  description: "Actionbar setting menu for maixduino",
+  auther: "Comdet Pheaudphut X Sonthaya Nongnuch",
+  website: "https://wwww.ioxgb.com/",
   git: "",
   image: "",
   version: "1.0.0",
@@ -16,7 +16,7 @@ module.exports = {
     wifi_ssid: "",
     wifi_password: "",
     comport: "",
-    baudrate: 115200,
+    baudrate: 2000000,
     cflag: "",
     loaded: false, //this will automatic set to 'true' if this pacakage loaded to IDE
   },

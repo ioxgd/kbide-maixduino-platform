@@ -8,6 +8,8 @@ const { default: PQueue } = engine.util.requireFunc("p-queue");
 const GB = Vue.prototype.$global;
 const mkdirp = engine.util.requireFunc("mkdirp");
 
+const md5File = require("./md5-file");
+
 //---- setup dir and config ----//
 let platformName = "maixduino";
 let platformDir = `${engine.util.platformDir}/${platformName}`;
@@ -29,12 +31,12 @@ const getName = (file) => path.basename(file).split(".")[0];
 const getFileName = (file) => path.basename(file);
 
 var G = {};
+var buildFirstTime = true;
 
 var boardDirectory;
 
 const setConfig = (context) => {
-  let localContext = JSON.parse(fs.readFileSync(`${platformDir}/context.json`,
-    "utf8"));
+  let localContext = JSON.parse(fs.readFileSync(`${platformDir}/context.json`, "utf8"));
   G = Object.assign({}, localContext);
   G.board_name = context.board_name;   //require boardname
   G.app_dir = context.app_dir;         //require app_dir
@@ -65,10 +67,10 @@ const setConfig = (context) => {
   
   G.ldflags = G.ldflags.map(f => f.replace(/\{platform\}/g, platformDir));
 
-  G.COMPILER_AR = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-ar.exe`;
-  G.COMPILER_GCC = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-gcc.exe`;
-  G.COMPILER_CPP = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-g++.exe`;
-  G.COMPILER_OBJCOPY = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-objcopy.exe`;
+  G.COMPILER_AR = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-ar`;
+  G.COMPILER_GCC = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-gcc`;
+  G.COMPILER_CPP = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-g++`;
+  G.COMPILER_OBJCOPY = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-objcopy`;
 
   G.COMPILER_KFLASH = `${platformDir}/tools/kflash/kflash_py`;
 
@@ -133,7 +135,7 @@ function compile(rawCode, boardName, config, cb) {
           let cppFiles = includedPlugin.sourceFile
             .filter(el=>el.endsWith(".cpp") || el.endsWith(".c"))
             .map(el=>includedPlugin.sourceIncludeDir + "/" +el);
-          codeContext.plugins_sources.push(...cppFiles);
+          codeContext.plugins_sources.push(cppFiles);
         }
       }
     } else {
@@ -141,16 +143,23 @@ function compile(rawCode, boardName, config, cb) {
       sourceCode = res.sourceCode;
       codeContext = res.codeContext;
     }
+	
     //----- plugin file src ----//
     inc_src = inc_src.concat(codeContext.plugins_sources);
     inc_switch = inc_switch.concat(codeContext.plugins_includes_switch);
-    //------ clear build folder and create new one --------//
-    if (fs.existsSync(app_dir)) {
-      engine.util.rmdirf(app_dir);
-    }
-    mkdirp.sync(app_dir);
+	
+    //------ clear build folder and create new one (One time) --------//
+	if (buildFirstTime) {
+      if (fs.existsSync(app_dir)) {
+        engine.util.rmdirf(app_dir);
+      }
+      mkdirp.sync(app_dir);
+	  
+	  buildFirstTime = false;
+	}
     //-----------------------------------------------------//
     fs.writeFileSync(`${app_dir}/user_app.cpp`, sourceCode, "utf8");
+	
     //--- step 3 load variable and flags ---//
     let cflags = [];
     let ldflags = [];
@@ -184,6 +193,7 @@ function compile(rawCode, boardName, config, cb) {
       // Link
       return linkObject(ldflags, libflags);
     }).then(() => {
+	  // Gen .bin
       return createBin();
     }).then(() => {
       resolve();
@@ -194,9 +204,9 @@ function compile(rawCode, boardName, config, cb) {
   });
 }
 //=====================================//
-const compileFiles = async function(sources, boardCppOptions, boardcflags, boardcppflags, plugins_includes_switch, concurrent = 8) {
+const compileFiles = async function(sources, boardCppOptions, boardcflags, boardcppflags, plugins_includes_switch) {
   log('>>> Compile Files ...');
-  const queue = new PQueue({ concurrency: concurrent });
+  const queue = new PQueue({ concurrency: 8 }); // run 8 on one time
 
   return new Promise(async (resolve, reject) => {
     let cflags = `${G.cflags.join(" ")} ${boardcflags.join(" ")}`;
@@ -206,9 +216,8 @@ const compileFiles = async function(sources, boardCppOptions, boardcflags, board
 
     let exec = async function(file, cmd) {
       try {
-        log("Compiling => " + file);
-        const { stdout, stderr } = await execPromise(ospath(cmd),
-          { cwd: G.process_dir });
+        log(`Compiling => ${file}`);
+        const { stdout, stderr } = await execPromise(ospath(cmd), { cwd: G.process_dir });
         if (!stderr) {
           log(`Compiled ... ${file} OK.`);
           G.cb(`compiling... ${path.basename(file)} ok.`);
@@ -220,14 +229,13 @@ const compileFiles = async function(sources, boardCppOptions, boardcflags, board
           });
         }
       } catch (e) {
-        log("Compile Error : " + e);
+        log(`Compile Error : ${e}`);
         console.error(`[maixdunio].compiler.js catch something`, e.error);
         console.error(`[maixdunio].compiler.js >>> `, e);
-        let _e = {
+        reject({
           file: file,
           error: e
-        };
-        reject(_e);
+        });
       }
     };
     
@@ -253,7 +261,7 @@ const archiveFiles = async function(sources) {
   log('>>> Archiving built core ... <<<');
 
   for (let file of sources) {
-	if (file.endsWith("user_app.cpp")) {
+	if (file.endsWith("user_app.cpp")) { // Skip main file
 		continue;
 	}
 		
@@ -261,7 +269,7 @@ const archiveFiles = async function(sources) {
     let fn_obj = `${G.app_dir}/${filename}.o`;
     let cmd = `"${G.COMPILER_AR}" rcs "${G.ARCHIVE_FILE}" "${fn_obj}"`;
 	  
-    log("Archiving => " + file);
+    log(`Archiving => ${file}`);
     const { stdout, stderr } = await execPromise(ospath(cmd), { cwd: G.process_dir });
 	  
     if (!stderr) {
@@ -289,9 +297,10 @@ function linkObject(boardldflags, extarnal_libflags) {
 
 function archiveProgram(plugins_sources) {
   log(`>>> Archiving... ${G.ARCHIVE_FILE}`);
-  let obj_files = plugins_sources.map(
-    plugin => `"${G.app_dir}/${getName(plugin)}.o"`).join(" ");
-  var cmd = `"${G.COMPILER_AR}" cru "${G.ARCHIVE_FILE}" ${obj_files}`;
+  
+  let obj_files = plugins_sources.map(plugin => `"${G.app_dir}/${getName(plugin)}.o"`).join(" ");
+  
+  var cmd = `"${G.COMPILER_AR}" rcs "${G.ARCHIVE_FILE}" ${obj_files}`;
   return execPromise(ospath(cmd), { cwd: G.process_dir });
 }
 
@@ -303,15 +312,12 @@ function createBin() {
 }
 
 function flash(port, baudrate, stdio) {
-  // baudrate = G.board_context.baudrate || baudrate || 2000000;
-  baudrate = 2000000;
+  log(`Flashing ... ${G.BIN_FILE}`);
+  
+  baudrate = G.board_context.baudrate || baudrate || 2000000;
   stdio = stdio || "inherit";
   let cmd = `"${G.COMPILER_KFLASH}" -n -p ${port} -b ${baudrate} -B dan "${G.BIN_FILE}"`;
-  log(`Flashing ... ${G.BIN_FILE}`);
-  return execPromise(ospath(cmd), {
-    cwd: G.process_dir,
-    stdio
-  });
+  return execPromise(ospath(cmd), { cwd: G.process_dir, stdio });
 }
 
 module.exports = {

@@ -122,8 +122,8 @@
       run() { //find port and mac
         G.$emit("compile-begin"); //<<<<< fire event
         console.log("---> step 1 <---");
-        comport = G.board.package["arduino-avr-actionbar"].comport;
-        baudrate = G.board.package["arduino-avr-actionbar"].baudrate;
+        comport = G.board.package["maixduino-actionbar"].comport;
+        baudrate = G.board.package["maixduino-actionbar"].baudrate;
         if (!comport) {
           console.log("------ process error ------");
           this.stepResult["1"].msg = `Cannot find COMPORT : ${comport}`;
@@ -132,7 +132,7 @@
           return;
         }else{
           let boardMac = {mac : "ff-ff-ff-ff-ff"};
-          this.stepResult["1"].msg += ` MAC ${boardMac.mac}`;
+          this.stepResult["1"].msg = `Found COMPORT : ${comport}`;
           mac = boardMac.mac;
           boardName = mac.replace(/:/g, "-");
           console.log(`[STEP 1] got it boardName = ${boardName} mac = ${mac}`);

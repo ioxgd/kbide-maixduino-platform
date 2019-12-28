@@ -21,13 +21,6 @@ Blockly.JavaScript['io_digital_write'] = function(block) {
   return code;
 };
 
-Blockly.JavaScript['io_analog_read'] = function(block) {
-  var value_pin = Blockly.JavaScript.valueToCode(block, 'pin', Blockly.JavaScript.ORDER_ATOMIC);  
-  var code = `analogRead(${value_pin})`;
-  return [code, Blockly.JavaScript.ORDER_ATOMIC];
-};
-
-
 Blockly.JavaScript['io_pwm_write'] = function(block) {
   var value_pin = Blockly.JavaScript.valueToCode(block, 'pin', Blockly.JavaScript.ORDER_ATOMIC);
   var value_value = Blockly.JavaScript.valueToCode(block, 'value', Blockly.JavaScript.ORDER_ATOMIC);  

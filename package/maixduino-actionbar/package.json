@@ -1,12 +1,12 @@
 {
-  "name": "arduino-avr-actionbar",
+  "name": "maixduino-actionbar",
   "version": "1.0.0",
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build --target lib --name arduino-avr-actionbar src/lib.js",
+    "build": "vue-cli-service build --target lib --name maixduino-actionbar src/lib.js",
     "lint": "vue-cli-service lint"
   },
-  "main": "./dist/arduino-avr-actionbar.common.js",
+  "main": "./dist/maixduino-actionbar.common.js",
   "dependencies": {
     "font-awesome": "^4.7.0",
     "vue": "^2.6.10",
