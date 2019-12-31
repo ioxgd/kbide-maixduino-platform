@@ -71,6 +71,7 @@ const setConfig = (context) => {
   G.Sflags = G.Sflags.map(f => f.replace(/\{preprocflags\}/g, G.preprocflags));
   
   G.ldflags = G.ldflags.map(f => f.replace(/\{platform\}/g, platformDir));
+  G.ldlibflag = G.ldlibflag.map(f => f.replace(/\{platform\}/g, platformDir));
 
   G.COMPILER_AR = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-ar`;
   G.COMPILER_GCC = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-gcc`;
@@ -191,11 +192,11 @@ function compile(rawCode, boardName, config, cb) {
     inc_src.push(`${app_dir}/user_app.cpp`);
     setConfig(contextBoard);
 	
-	console.log(inc_src);
+	// console.log(inc_src);
 
     compileFiles(inc_src, [], cflags, cflags, inc_switch).then(() => {
       // Archiving built core (caching)
-      return archiveFiles(inc_src);
+      // return archiveFiles(inc_src);
 	}).then(() => {
       // Link
       return linkObject(ldflags, libflags);
@@ -231,10 +232,7 @@ const compileFiles = async function(sources, boardCppOptions, boardcflags, board
           G.cb(`compiling... ${path.basename(file)} ok.`);
         } else {
           log(`Compiled... ${file} OK. (with warnings)`);
-          G.cb({
-            file: path.basename(file),
-            error: null
-          });
+          G.cb(`compiling... ${path.basename(file)} ok. (with warnings)`);
         }
       } catch (e) {
         log(`Compile Error : ${e}`);
@@ -288,10 +286,6 @@ const compileFiles = async function(sources, boardCppOptions, boardcflags, board
 //=====================================//
 const archiveFiles = async function(sources) {
   log('>>> Archiving built core ... <<<');
-  
-  // if (!coreChange) {
-    return true;
-  // }
 
   for (let file of sources) {
 	if (file.endsWith("user_app.cpp")) { // Skip main file
@@ -310,10 +304,7 @@ const archiveFiles = async function(sources) {
       G.cb(`Archiving... ${path.basename(file)} ok.`);
     } else {
       log(`Archiving... ${file} OK. (with warnings)`);
-      G.cb({
-        file: path.basename(file),
-        error: null
-      });
+	  G.cb(`Archiving... ${path.basename(file)} ok. (with warnings)`);
     }
   }
 };
@@ -324,27 +315,34 @@ function linkObject(boardldflags, extarnal_libflags) {
   
   let ldflags = `${G.ldflags.join(" ")} ${boardldflags.join(" ")} ${extarnal_libflags.join(" ")}`;
 
-  let obj_files = fs.readdirSync(G.app_dir).filter(f => f.endsWith(".o"));
+  // let obj_files = fs.readdirSync(G.app_dir).filter(f => f.endsWith(".o"));
   // obj_files = obj_files.map(f => `"${G.app_dir}/${f}"`).join(" ");
-  obj_files = obj_files.map(f => `${G.app_dir}/${f}`)
+  // obj_files = obj_files.map(f => `${G.app_dir}/${f}`);
   
   // cmd = `"${G.COMPILER_GCC}" ${ldflags} -T "${platformDir}/cores/kendryte-standalone-sdk/lds/kendryte.ld" ${G.app_dir}/user_app.cpp.o -o "${G.ELF_FILE}" -Wl,--start-group -lgcc -lm -lc -Wl,--end-group -Wl,--start-group "${G.ARCHIVE_FILE}" -lgcc -lm -lc -Wl,--end-group`;
-  cmd = `"${G.COMPILER_GCC}" ${ldflags} -T "${platformDir}/cores/kendryte-standalone-sdk/lds/kendryte.ld" ${obj_files} -o "${G.ELF_FILE}" -Wl,--start-group -lgcc -lm -lc -Wl,--end-group -Wl,--start-group "${G.ARCHIVE_FILE}" -lgcc -lm -lc -Wl,--end-group`;
+  // cmd = `"${G.COMPILER_GCC}" ${ldflags} -T "${platformDir}/cores/kendryte-standalone-sdk/lds/kendryte.ld" ${obj_files} -o "${G.ELF_FILE}" -Wl,--start-group -lgcc -lm -lc -Wl,--end-group -Wl,--start-group "${G.ARCHIVE_FILE}" -lgcc -lm -lc -Wl,--end-group`;
   // return execPromise(ospath(cmd), { cwd: G.process_dir });
   
   let arg = [];
   arg = arg.concat(ldflags.split(' '));
   arg.push("-T");
   arg.push(`${platformDir}/cores/kendryte-standalone-sdk/lds/kendryte.ld`);
-  arg = arg.concat(obj_files);
+  arg = arg.concat(engine.util.walk(G.app_dir).filter(f => path.extname(f) === ".o"));
+  arg = arg.concat(engine.util.walk(`${boardDirectory}/lib`).filter(f => path.extname(f) === ".o"));
   arg.push('-o');
   arg.push(G.ELF_FILE);
+  arg = arg.concat("-Wl,--gc-sections -Wl,-static -Wl,--whole-archive -Wl,--no-whole-archive -Wl,-EL -Wl,--no-relax -Wl,--start-group".split(' '));
+  arg = arg.concat(`${G.ldlibflag.join(" ")} ${extarnal_libflags.join(" ")}`.split(' '));
+  arg = arg.concat(engine.util.walk(`${platformDir}/lib`).filter(f => path.extname(f) === ".a"));
+  arg = arg.concat(engine.util.walk(`${boardDirectory}/lib`).filter(f => path.extname(f) === ".a"));
+  arg = arg.concat("-lgcc -lm -lc -Wl,--end-group".split(' '));
   
-  arg = arg.map(p => ospath(p));
-  arg = arg.filter(x => x.length > 0)
+  arg = arg.map(p => ospath(p)).filter(x => x.length > 0);
+  
+  // console.log(ospath(G.COMPILER_CPP), arg.join(' '));
   
   return new Promise((resolve, reject) => {
-    execFile(ospath(G.COMPILER_CPP + ".exe"), arg, {cwd: G.process_dir }, (error, stdout, stderr) => {
+    execFile(ospath(G.COMPILER_CPP), arg, {cwd: G.process_dir }, (error, stdout, stderr) => {
       if (error) {
         console.warn(error);
 		reject(error);
@@ -365,7 +363,7 @@ function archiveProgram(plugins_sources) {
 }
 
 function createBin() {
-  log(`Creating hex image... ${G.BIN_FILE}`);
+  log(`Creating bin image... ${G.BIN_FILE}`);
 
   let cmd_hex = `"${G.COMPILER_OBJCOPY}" --output-format=binary "${G.ELF_FILE}" "${G.BIN_FILE}"`;
   return execPromise(ospath(cmd_hex), { cwd: G.process_dir });

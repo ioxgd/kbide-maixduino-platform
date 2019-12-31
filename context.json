@@ -1,6 +1,20 @@
 {
   "gcc_dir": "tools/riscv64-unknown-elf-gcc/bin",
   "preprocflags": [
+	"-I\"{platform}/include/Adafruit-GFX-Library\"",
+	"-I\"{platform}/include/Camera/src\"",
+	"-I\"{platform}/include/Maix_KPU/src\"",
+	"-I\"{platform}/include/Maix_Speech_Recognition/src\"",
+	"-I\"{platform}/include/MSA300/src\"",
+	"-I\"{platform}/include/NS2009/src\"",
+	"-I\"{platform}/include/SD/src\"",
+	"-I\"{platform}/include/Sipeed_OV2640/src\"",
+	"-I\"{platform}/include/Sipeed_ST7789/src\"",
+	"-I\"{platform}/include/SPI/src\"",
+	"-I\"{platform}/include/Ticker/src\"",
+	"-I\"{platform}/include/WiFiEsp/src\"",
+	"-I\"{platform}/include/Wire/src\"",
+	"-I\"{board}/include\"",
 	"-I\"{platform}/cores\"",
     "-I\"{platform}/cores/avr\"",
     "-I\"{platform}/cores/hal/include\"",
@@ -9,9 +23,7 @@
     "-I\"{platform}/cores/kendryte-standalone-sdk/lib/utils/include\"",
     "-I\"{platform}/cores/kendryte-standalone-sdk/lib/freertos/conf\"",
     "-I\"{platform}/cores/kendryte-standalone-sdk/lib/freertos/include\"",
-    "-I\"{platform}/cores/kendryte-standalone-sdk/lib/freertos/portable\"",
-	"-I\"{platform}/libraries/SPI/src\"",
-	"-I\"{board}/include\""
+    "-I\"{platform}/cores/kendryte-standalone-sdk/lib/freertos/portable\""
   ],
   "bothflags": [
 	"-mcmodel=medany -mabi=lp64f -march=rv64imafc -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fno-zero-initialized-in-bss -Os -ggdb",
@@ -44,7 +56,10 @@
 	"-DCONFIG_LOG_ENABLE",
 	"-DCONFIG_LOG_LEVEL=LOG_INFO",
 	"-DDEBUG=1",
-	"-D__riscv64"
+	"-D__riscv64",
+	"-DBOARD_SIPEED_MAIX_ONE_DOCK",
+	"-DK210",
+	"-DARCH=K210"
   ],
   "cflags": [
 	"-c {debugflags} {bothflags} {preprocflags}",
@@ -67,6 +82,7 @@
   "ldflags": [
     "-mcmodel=medany -mabi=lp64f -march=rv64imafc -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fno-zero-initialized-in-bss -Os -ggdb -nostartfiles -static -Wl,--gc-sections -Wl,-static -Wl,--whole-archive -Wl,--no-whole-archive -Wl,-EL -Wl,--no-relax -Wl,--start-group -lgcc -lm -lc -Wl,--end-group"
   ],
+  "ldlibflag": [ ],
   "Sflags": [
 	"-c {debugflags} {bothflags} {preprocflags}",
 	"-g -x assembler-with-cpp -D __riscv64"
