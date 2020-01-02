@@ -19,8 +19,8 @@ import gdb
 import os
 import os.path
 
-pythondir = '/opt/kendryte-toolchain/share/gcc-8.2.0/python'
-libdir = '/opt/kendryte-toolchain/riscv64-unknown-elf/lib'
+pythondir = '/usr/local/opt/kendryte-toolchain/share/gcc-8.2.0/python'
+libdir = '/usr/local/opt/kendryte-toolchain/riscv64-unknown-elf/lib'
 
 # This file might be loaded when there is no current objfile.  This
 # can happen if the user loads it manually.  In this case we don't

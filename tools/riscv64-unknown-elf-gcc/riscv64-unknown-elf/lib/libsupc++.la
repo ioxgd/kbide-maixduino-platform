@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/opt/kendryte-toolchain/riscv64-unknown-elf/lib'
+libdir='/usr/local/opt/kendryte-toolchain/riscv64-unknown-elf/lib'

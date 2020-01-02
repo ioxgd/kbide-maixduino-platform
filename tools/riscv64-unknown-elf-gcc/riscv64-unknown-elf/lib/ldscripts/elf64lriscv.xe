@@ -7,7 +7,7 @@ OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv",
 	      "elf64-littleriscv")
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
-SEARCH_DIR("/opt/kendryte-toolchain/riscv64-unknown-elf/lib");
+SEARCH_DIR("/usr/local/opt/kendryte-toolchain/riscv64-unknown-elf/lib");
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
