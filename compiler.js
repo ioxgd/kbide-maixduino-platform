@@ -78,7 +78,7 @@ const setConfig = (context) => {
   G.COMPILER_CPP = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-g++`;
   G.COMPILER_OBJCOPY = `${platformDir}/${G.gcc_dir}/riscv64-unknown-elf-objcopy`;
 
-  G.COMPILER_KFLASH = `${platformDir}/tools/kflash/kflash_py`;
+  G.COMPILER_KFLASH = `${platformDir}/tools/kflash/kflash${(process.platform === "win32" || process.platform === "darwin") ? '_py' : '.py'}`;
 
   G.ELF_FILE = `${G.app_dir}/${G.board_name}.elf`;
   G.BIN_FILE = `${G.app_dir}/${G.board_name}.bin`;
